@@ -1,0 +1,23 @@
+# Web framework
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+
+# Data validation
+pydantic==2.7.3
+pydantic-settings==2.3.1
+
+# Database ORM
+sqlalchemy==2.0.30
+alembic==1.13.1
+
+# PostgreSQL driver
+psycopg2-binary==2.9.9
+
+# Environment
+python-decouple==3.8
+
+# HTTP client (inter-service calls)
+httpx==0.27.0
+
+# TODO: Add sentry-sdk for error tracking
+# TODO: Add prometheus-fastapi-instrumentator for metrics
