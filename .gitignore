@@ -38,6 +38,9 @@ build/
 # Logs
 *.log
 
+# Generated report files (PDF/CSV/Excel) written at runtime
+generated_reports/
+
 # Editor
 .vscode/
 .idea/
