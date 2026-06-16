@@ -10,7 +10,22 @@ backend, so DATABASE_URL / REDIS_URL mirror the values used there.
 from functools import lru_cache
 from typing import List
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _clean(value: str) -> str:
+    """Strip surrounding whitespace and matching quotes from a value.
+
+    Platforms like Render store env vars literally, so a value pasted as
+    DATABASE_URL="postgresql://..." keeps the quotes and breaks URL parsing.
+    """
+    if not isinstance(value, str):
+        return value
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+        value = value[1:-1].strip()
+    return value
 
 
 class Settings(BaseSettings):
@@ -33,6 +48,11 @@ class Settings(BaseSettings):
 
     # ── Redis (shared instance) ─────────────────────────────────
     REDIS_URL: str = "redis://localhost:6379"
+
+    @field_validator("DATABASE_URL", "REDIS_URL", mode="before")
+    @classmethod
+    def _strip_quotes(cls, v):
+        return _clean(v)
 
     # ── Redis event channels we subscribe to ───────────────────
     EVENT_CHANNELS: List[str] = [
