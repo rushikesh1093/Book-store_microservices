@@ -1,0 +1,23 @@
+# ── Web framework ────────────────────────────────────────────
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# ── Database (async + sync via psycopg3, Neon/SSL friendly) ──
+SQLAlchemy[asyncio]==2.0.36
+psycopg[binary]==3.2.3
+
+# ── Settings / config ────────────────────────────────────────
+pydantic==2.10.4
+pydantic-settings==2.7.0
+python-dotenv==1.0.1
+
+# ── Redis (events / pub-sub) ─────────────────────────────────
+redis==5.2.1
+
+# ── Scheduler (ETL jobs) ─────────────────────────────────────
+APScheduler==3.11.0
+
+# ── Reporting / data ─────────────────────────────────────────
+pandas==2.2.3
+reportlab==4.2.5
+openpyxl==3.1.5
