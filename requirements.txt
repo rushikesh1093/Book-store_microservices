@@ -1,23 +1,23 @@
-# Web framework
+# ── Web framework ────────────────────────────────────────────
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 
-# Data validation
+# ── Database (async + sync via psycopg3, Neon/SSL friendly) ──
+SQLAlchemy[asyncio]==2.0.36
+psycopg[binary]==3.2.3
+
+# ── Settings / config ────────────────────────────────────────
 pydantic==2.10.4
 pydantic-settings==2.7.0
+python-dotenv==1.0.1
 
-# Database ORM
-sqlalchemy==2.0.37
-alembic==1.14.0
+# ── Redis (events / pub-sub) ─────────────────────────────────
+redis==5.2.1
 
-# PostgreSQL driver
-psycopg2-binary==2.9.10
+# ── Scheduler (ETL jobs) ─────────────────────────────────────
+APScheduler==3.11.0
 
-# Environment
-python-decouple==3.8
-
-# HTTP client (inter-service calls)
-httpx==0.28.1
-
-# TODO: Add sentry-sdk for error tracking
-# TODO: Add prometheus-fastapi-instrumentator for metrics
+# ── Reporting / data ─────────────────────────────────────────
+pandas==2.2.3
+reportlab==4.2.5
+openpyxl==3.1.5
