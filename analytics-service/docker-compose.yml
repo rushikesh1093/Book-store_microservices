@@ -1,0 +1,53 @@
+# ── Analytics Microservice · local stack ───────────────────────
+# Brings up the FastAPI analytics service plus a local Redis. The database is
+# the shared Neon PostgreSQL instance, configured via DATABASE_URL in .env
+# (no local Postgres container by default). Uncomment the `postgres` service
+# below if you want a fully local database instead.
+
+services:
+  analytics:
+    build: .
+    container_name: bookstore-analytics
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    environment:
+      # Point at the compose Redis service unless overridden in .env.
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./generated_reports:/app/generated_reports
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: bookstore-analytics-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+# Optional fully-local PostgreSQL — uncomment and set DATABASE_URL to
+# postgresql://bookstore:bookstore@postgres:5432/bookstore to use it.
+#
+#  postgres:
+#    image: postgres:16-alpine
+#    container_name: bookstore-analytics-db
+#    environment:
+#      POSTGRES_USER: bookstore
+#      POSTGRES_PASSWORD: bookstore
+#      POSTGRES_DB: bookstore
+#    ports:
+#      - "5432:5432"
+#    volumes:
+#      - pgdata:/var/lib/postgresql/data
+#
+#volumes:
+#  pgdata:
