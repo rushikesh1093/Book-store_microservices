@@ -56,8 +56,8 @@ def _sales_dataframe(start: Optional[date], end: Optional[date]) -> pd.DataFrame
         JOIN orders o ON o.id = oi.order_id
         JOIN books b  ON b.id = oi.book_id
         WHERE o.status IN ({_status_in()})
-          AND (%(start)s IS NULL OR o.created_at >= %(start)s)
-          AND (%(end)s IS NULL OR o.created_at < (%(end)s::date + INTERVAL '1 day'))
+          AND (CAST(:start AS date) IS NULL OR o.created_at >= CAST(:start AS date))
+          AND (CAST(:end AS date) IS NULL OR o.created_at < (CAST(:end AS date) + INTERVAL '1 day'))
         GROUP BY b.title, b.author
         ORDER BY revenue DESC
     """
@@ -103,6 +103,16 @@ _BUILDERS = {
     "inventory": _inventory_dataframe,
     "customers": _customers_dataframe,
 }
+
+
+def build_dataset_records(report_type: str, start=None, end=None) -> list[dict]:
+    """Build a report dataset and return it as a list of plain dict rows."""
+    report_type = report_type.lower()
+    if report_type not in _BUILDERS:
+        raise ValueError(f"Unsupported report_type '{report_type}'.")
+    df = _BUILDERS[report_type](start, end)
+    # Normalise numpy/pandas scalar types to native Python for JSON.
+    return df.to_dict(orient="records")
 
 
 # ── File writers (sync) ────────────────────────────────────────

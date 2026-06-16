@@ -32,9 +32,13 @@ def _date_params(start: Optional[date], end: Optional[date]) -> dict:
 
 
 def _date_filter(col: str = "o.created_at") -> str:
+    # Cast every occurrence of the bound params to date. Postgres cannot infer
+    # the type of a bare parameter used only in "IS NULL", and SQLAlchemy's
+    # text() parser ignores ":param" when immediately followed by a "::" cast,
+    # so an explicit CAST(:name AS date) is the portable, unambiguous form.
     return (
-        f"AND (:start IS NULL OR {col} >= :start) "
-        f"AND (:end IS NULL OR {col} < (:end::date + INTERVAL '1 day'))"
+        f"AND (CAST(:start AS date) IS NULL OR {col} >= CAST(:start AS date)) "
+        f"AND (CAST(:end AS date) IS NULL OR {col} < (CAST(:end AS date) + INTERVAL '1 day'))"
     )
 
 

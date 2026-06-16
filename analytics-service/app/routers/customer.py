@@ -24,6 +24,16 @@ from app.services.customer_service import CustomerService
 router = APIRouter(prefix="/analytics/customers", tags=["customers"])
 
 
+@router.get("")
+@router.get("/")
+async def customers_index(
+    limit: int = Query(10, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+):
+    """Customers index — returns the lifetime-value overview (alias of /ltv)."""
+    return await CustomerService(db).ltv(limit=limit)
+
+
 @router.get("/cohorts")
 async def customer_cohorts(
     months: int = Query(12, ge=1, le=36),

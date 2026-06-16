@@ -98,8 +98,8 @@ class CustomerService:
                 to_char(date_trunc('month', u.date_joined), 'YYYY-MM') AS period,
                 COUNT(*)                                               AS new_customers
             FROM users u
-            WHERE (:start IS NULL OR u.date_joined >= :start)
-              AND (:end IS NULL OR u.date_joined < (:end::date + INTERVAL '1 day'))
+            WHERE (CAST(:start AS date) IS NULL OR u.date_joined >= CAST(:start AS date))
+              AND (CAST(:end AS date) IS NULL OR u.date_joined < (CAST(:end AS date) + INTERVAL '1 day'))
             GROUP BY date_trunc('month', u.date_joined)
             ORDER BY date_trunc('month', u.date_joined)
             """
