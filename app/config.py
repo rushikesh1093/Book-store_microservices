@@ -66,7 +66,10 @@ class Settings(BaseSettings):
     SCHEDULER_ENABLED: bool = True
 
     # ── Redis consumer toggle ───────────────────────────────────
-    REDIS_CONSUMER_ENABLED: bool = True
+    # OFF by default: the service runs fully without Redis (e.g. on Render,
+    # which doesn't offer Redis on the free tier). Set to True AND provide a
+    # reachable REDIS_URL to enable live event ingestion.
+    REDIS_CONSUMER_ENABLED: bool = False
 
     # ── Where generated reports are written ─────────────────────
     REPORTS_DIR: str = "generated_reports"
