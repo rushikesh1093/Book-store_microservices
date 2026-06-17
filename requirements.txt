@@ -11,9 +11,6 @@ pydantic==2.10.4
 pydantic-settings==2.7.0
 python-dotenv==1.0.1
 
-# ── Redis (events / pub-sub) ─────────────────────────────────
-redis==5.2.1
-
 # ── Scheduler (ETL jobs) ─────────────────────────────────────
 APScheduler==3.11.0
 
@@ -21,3 +18,7 @@ APScheduler==3.11.0
 pandas==2.2.3
 reportlab==4.2.5
 openpyxl==3.1.5
+
+# ── Optional: only needed if the Redis event consumer is enabled
+# (REDIS_CONSUMER_ENABLED=True). Not required to run the service.
+# redis==5.2.1

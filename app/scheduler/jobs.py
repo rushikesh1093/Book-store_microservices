@@ -3,20 +3,19 @@ app/scheduler/jobs.py
 
 ETL / aggregation jobs run by APScheduler:
 
-  * Daily sales refresh        -> recompute & cache yesterday's sales totals.
+  * Daily sales refresh        -> recompute yesterday's sales totals.
   * Inventory refresh          -> snapshot low/out-of-stock counts.
-  * Weekly customer analytics  -> refresh LTV / churn snapshot.
+  * Weekly customer analytics  -> refresh LTV / repeat snapshot.
   * Monthly aggregation        -> roll raw events into analytics_event_aggregates.
 
 The jobs use the synchronous engine because APScheduler executors run them in
-worker threads, outside the FastAPI event loop. Heavy results are cached in
-Redis (best-effort) for fast dashboard reads.
+worker threads, outside the FastAPI event loop. Results are logged; the live
+endpoints always compute fresh values directly from the database, so no Redis
+cache is required (the service runs without Redis).
 """
-import json
 import logging
 from datetime import datetime, timezone
 
-import redis as sync_redis
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy import text
@@ -31,16 +30,6 @@ _scheduler: AsyncIOScheduler | None = None
 
 def _status_in() -> str:
     return ", ".join(f"'{s}'" for s in settings.SALE_STATUSES)
-
-
-def _cache_set(key: str, value: dict, ttl: int = 86400) -> None:
-    """Best-effort write of a job result to Redis."""
-    try:
-        client = sync_redis.from_url(settings.REDIS_URL, decode_responses=True)
-        client.set(f"analytics:cache:{key}", json.dumps(value, default=str), ex=ttl)
-        client.close()
-    except Exception as exc:  # pragma: no cover - cache is optional
-        logger.warning("Could not cache %s: %s", key, exc)
 
 
 # ── Job functions ──────────────────────────────────────────────
@@ -65,7 +54,6 @@ def daily_sales_refresh() -> None:
         "orders": int(row["orders"]),
         "refreshed_at": datetime.now(timezone.utc).isoformat(),
     }
-    _cache_set("daily_sales", result)
     logger.info("[job] daily_sales_refresh done: %s", result)
 
 
@@ -92,7 +80,6 @@ def inventory_refresh() -> None:
         "inventory_value": float(row["inventory_value"]),
         "refreshed_at": datetime.now(timezone.utc).isoformat(),
     }
-    _cache_set("inventory_health", result)
     logger.info("[job] inventory_refresh done: %s", result)
 
 
@@ -123,7 +110,6 @@ def weekly_customer_analytics() -> None:
         "average_ltv": round(float(row["avg_ltv"]), 2),
         "refreshed_at": datetime.now(timezone.utc).isoformat(),
     }
-    _cache_set("customer_analytics", result)
     logger.info("[job] weekly_customer_analytics done: %s", result)
 
 

@@ -1,25 +1,31 @@
 """
 app/redis_client.py
 
-Async Redis connection shared across the service (pub/sub consumer + health
-checks). A single client is created lazily and reused.
+Optional async Redis client used only when the event consumer is explicitly
+enabled (REDIS_CONSUMER_ENABLED=True with a reachable REDIS_URL). The service
+runs fully without Redis, so the ``redis`` package is imported lazily and is
+not a hard dependency.
 """
 import logging
 from typing import Optional
-
-import redis.asyncio as aioredis
 
 from app.config import settings
 
 logger = logging.getLogger("analytics.redis")
 
-_client: Optional[aioredis.Redis] = None
+_client = None  # type: ignore[var-annotated]
 
 
-def get_redis() -> aioredis.Redis:
-    """Return a lazily-initialised shared async Redis client."""
+def get_redis():
+    """Return a lazily-initialised shared async Redis client.
+
+    Imports ``redis`` on first use so the package is only required when Redis
+    is actually enabled.
+    """
     global _client
     if _client is None:
+        import redis.asyncio as aioredis  # lazy import
+
         _client = aioredis.from_url(
             settings.REDIS_URL,
             encoding="utf-8",
@@ -32,7 +38,7 @@ def get_redis() -> aioredis.Redis:
 
 
 async def check_redis() -> bool:
-    """Ping Redis for the /health probe."""
+    """Ping Redis (used only if Redis is enabled)."""
     try:
         client = get_redis()
         return bool(await client.ping())
