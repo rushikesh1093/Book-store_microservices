@@ -19,6 +19,8 @@ pandas==2.2.3
 reportlab==4.2.5
 openpyxl==3.1.5
 
-# ── Optional: only needed if the Redis event consumer is enabled
-# (REDIS_CONSUMER_ENABLED=True). Not required to run the service.
-# redis==5.2.1
+# ── Redis ────────────────────────────────────────────────────
+# Used only when the event consumer is enabled (REDIS_CONSUMER_ENABLED=True
+# with a reachable REDIS_URL, e.g. a Render Key Value instance). Imported
+# lazily, so the service still runs fine without a Redis server.
+redis==5.2.1
