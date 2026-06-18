@@ -87,24 +87,19 @@ class SalesService:
         if book_ids:
             book_clause = _book_clause(book_ids)
             # Scope every aggregate to the requested books via order_items.
+            # totals + items_sold combined into one round-trip (same join/filter).
             totals_sql = text(
                 f"""
                 SELECT
                     COALESCE(SUM(oi.quantity * oi.unit_price), 0) AS total_revenue,
-                    COUNT(DISTINCT o.id)                          AS total_orders
+                    COUNT(DISTINCT o.id)                          AS total_orders,
+                    COALESCE(SUM(oi.quantity), 0)                 AS items_sold
                 FROM order_items oi
                 JOIN orders o ON o.id = oi.order_id
                 WHERE {_status_clause()} {_date_filter()} {book_clause}
                 """
             )
-            items_sql = text(
-                f"""
-                SELECT COALESCE(SUM(oi.quantity), 0) AS items_sold
-                FROM order_items oi
-                JOIN orders o ON o.id = oi.order_id
-                WHERE {_status_clause()} {_date_filter()} {book_clause}
-                """
-            )
+            items_sql = None
             month_sql = text(
                 f"""
                 SELECT COALESCE(SUM(oi.quantity * oi.unit_price), 0) AS monthly_revenue
@@ -144,7 +139,12 @@ class SalesService:
             month_params = _status_params()
 
         totals = (await self.db.execute(totals_sql, params)).mappings().first()
-        items = (await self.db.execute(items_sql, params)).mappings().first()
+        if items_sql is not None:
+            items = (await self.db.execute(items_sql, params)).mappings().first()
+            items_sold = int(items["items_sold"])
+        else:
+            # Scoped path folds items_sold into the totals query.
+            items_sold = int(totals["items_sold"])
         month = (await self.db.execute(month_sql, month_params)).mappings().first()
 
         top = await self.top_selling_books(start, end, limit=5, book_ids=book_ids)
@@ -156,7 +156,7 @@ class SalesService:
         return {
             "total_revenue": round(total_revenue, 2),
             "total_orders": total_orders,
-            "total_items_sold": int(items["items_sold"]),
+            "total_items_sold": items_sold,
             "average_order_value": round(avg_order, 2),
             "monthly_revenue": round(float(month["monthly_revenue"]), 2),
             "top_selling_books": top,
