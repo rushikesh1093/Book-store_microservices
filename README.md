@@ -57,18 +57,29 @@ Health probe endpoint: `GET /health` → `{"status": "ok"}`
 
 ## Endpoint Overview
 
-| Method | Path                       | Status          |
-|--------|----------------------------|-----------------|
-| GET    | `/health`                  | ✅ Implemented  |
-| GET    | `/analytics/sales`         | 501 Placeholder |
-| GET    | `/analytics/sales/top-books` | 501 Placeholder |
-| GET    | `/analytics/traffic`       | 501 Placeholder |
-| GET    | `/analytics/customers`     | 501 Placeholder |
-| GET    | `/reports/inventory`       | 501 Placeholder |
-| GET    | `/reports/sales`           | 501 Placeholder |
-| GET    | `/reports/customers`       | 501 Placeholder |
+| Method | Path                              | Status         |
+|--------|-----------------------------------|----------------|
+| GET    | `/health`                         | ✅ Implemented |
+| GET    | `/analytics/sales/summary`        | ✅ Implemented |
+| GET    | `/analytics/sales/daily`          | ✅ Implemented |
+| GET    | `/analytics/sales/monthly`        | ✅ Implemented |
+| GET    | `/analytics/sales/top-books`      | ✅ Implemented |
+| GET    | `/analytics/sales/by-author`      | ✅ Implemented |
+| GET    | `/analytics/sales/by-category`    | ✅ Implemented |
+| GET    | `/analytics/sales/book/{book_id}` | ✅ Implemented |
+| GET    | `/analytics/inventory/health`     | ✅ Implemented |
+| GET    | `/analytics/customers/ltv`        | ✅ Implemented |
+| POST   | `/reports/generate`               | ✅ Implemented |
+| GET    | `/reports/{sales,inventory,customers}` | ✅ Implemented |
 
-## Phase 0 Status
+### Scoping sales to specific books
 
-Health endpoint is functional.
-All analytics and report endpoints return `501 Not Implemented`.
+The sales summary, daily, monthly and top-books endpoints accept an optional
+`book_ids` query parameter (comma-separated UUIDs). When supplied, all figures
+are scoped to those books only. The Django backend uses this to power
+author-scoped dashboards (an author sees totals for just the books they own):
+
+```
+GET /analytics/sales/summary?book_ids=<uuid1>,<uuid2>
+GET /analytics/sales/book/<uuid>      # single-book totals + daily series
+```
