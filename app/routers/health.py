@@ -1,21 +1,33 @@
 """
-routers/health.py — Health check endpoint.
-Used by Railway's health probe.
+app/routers/health.py
+
+Liveness / readiness probe. Checks PostgreSQL connectivity — the only critical
+dependency for serving analytics. (Redis is optional and not used by default,
+so it is not part of the health check.)
 """
-from fastapi import APIRouter
-from pydantic import BaseModel
+from datetime import datetime, timezone
 
-router = APIRouter()
+from fastapi import APIRouter, Response, status
+
+from app.config import settings
+from app.database import check_database
+from app.models.schemas import DependencyStatus, HealthResponse
+
+router = APIRouter(tags=["health"])
 
 
-class HealthResponse(BaseModel):
-    status: str
+@router.get("/health", response_model=HealthResponse)
+async def health(response: Response) -> HealthResponse:
+    db_ok = await check_database()
+    if not db_ok:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
 
-
-@router.get("/health", response_model=HealthResponse, summary="Health check")
-def health_check():
-    """
-    GET /health
-    Returns 200 OK — used by Railway health probes.
-    """
-    return {"status": "ok"}
+    return HealthResponse(
+        service=settings.SERVICE_NAME,
+        version=settings.VERSION,
+        status="healthy" if db_ok else "unhealthy",
+        dependencies=[
+            DependencyStatus(name="postgresql", status="up" if db_ok else "down"),
+        ],
+        timestamp=datetime.now(timezone.utc),
+    )

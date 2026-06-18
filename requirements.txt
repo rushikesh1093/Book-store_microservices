@@ -1,23 +1,26 @@
-# Web framework
+# ── Web framework ────────────────────────────────────────────
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 
-# Data validation
+# ── Database (async + sync via psycopg3, Neon/SSL friendly) ──
+SQLAlchemy[asyncio]==2.0.36
+psycopg[binary]==3.2.3
+
+# ── Settings / config ────────────────────────────────────────
 pydantic==2.10.4
 pydantic-settings==2.7.0
+python-dotenv==1.0.1
 
-# Database ORM
-sqlalchemy==2.0.37
-alembic==1.14.0
+# ── Scheduler (ETL jobs) ─────────────────────────────────────
+APScheduler==3.11.0
 
-# PostgreSQL driver
-psycopg2-binary==2.9.10
+# ── Reporting / data ─────────────────────────────────────────
+pandas==2.2.3
+reportlab==4.2.5
+openpyxl==3.1.5
 
-# Environment
-python-decouple==3.8
-
-# HTTP client (inter-service calls)
-httpx==0.28.1
-
-# TODO: Add sentry-sdk for error tracking
-# TODO: Add prometheus-fastapi-instrumentator for metrics
+# ── Redis ────────────────────────────────────────────────────
+# Used only when the event consumer is enabled (REDIS_CONSUMER_ENABLED=True
+# with a reachable REDIS_URL, e.g. a Render Key Value instance). Imported
+# lazily, so the service still runs fine without a Redis server.
+redis==5.2.1
